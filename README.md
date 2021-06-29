@@ -44,11 +44,12 @@ To check for possible contamination in our sample, you can use kraken2 to classf
 
     kraken2 --use-names --threads 50 --db ~/valentin/kraken2_gtdb/ --report kraken2_gtdb.report knoellia_reads.fastq 
 
-Let's check the resulting report in pavian.
+I added the resulting report in the repository. Let's check it in pavian.
 
 In RStudio type in
 
     pavian::runApp(port=5000) 
+Then load the report file and visualise the plot in "Samples".
 
 Use seqkit stats to check stats on N50, number of reads, max length, quality scores, etc
 
@@ -60,7 +61,7 @@ Use nanoplot to plot quality vs length (optional)
 
 
 ## Hybrid Assembly
-Assemble long reads and short reads with unicycler.
+Assemble long reads and short reads with unicycler. Should take 30-90 mins on 8 cores.
 
     unicycler -1 30885_3I2SR_1_trimmed.fastq.gz -2 30885_3ISR_2_trimmed.fastq.gz -l knoellia_reads.fastq -t 8 -o unicycler
 
