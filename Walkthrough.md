@@ -59,20 +59,29 @@ Use nanoplot to plot quality vs length (optional)
 
     NanoPlot --fastq knoellia_reads.fastq -t 8 --N50 --plots -o knoellia_nanoplot
 
+## Assemblies
+We're going to do short-read assembly, hybrid assembly and long-read assembly followed by polishing with short reads (so kind of hybrid).
+
+## Short Read assembly
+Spades just uses the short reads to assemble. Very accurate, maybe not so contiguous.
+
 
 ## Hybrid Assembly
-Assemble long reads and short reads with unicycler. Should take 30-90 mins on 8 cores.
+Unicycler uses spades to assemble the short read contigs, but then also uses the long reads to bridge the gaps in between, and then polishes off the gaps with short reads. Result should be much more contiguous than short read assembly. Should take 30-90 mins on 8 cores.
 
     unicycler -1 30885_3I2SR_1_trimmed.fastq.gz -2 30885_3ISR_2_trimmed.fastq.gz -l knoellia_reads.fastq -t 8 -o unicycler
 
 
 ## Long Read Assembly
+Assemble long reads with flye. This usually produces the most contiguous assembly, but it still needs polishing both with long-read specific tools and with the short reads of the same sample.
+
+    flye --threads 8 --genome-size 4g --nano-raw knoellia_reads.fastq --out-dir flye_assembly
 
 ### Long Read Assembly Polishing with Racon (4x) and Medaka (1x)
+#### test
 
 ### Long Read Assembly Polishing with Pilon
 
-### Short Read assembly
 
 ## Compare Assemblies
 We can compare assemblies using different tools. E.g. seqkit. We can also use Bandage.app to check out the .gfa assembly graph.
