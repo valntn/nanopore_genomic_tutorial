@@ -99,9 +99,11 @@ Then we repeat the process three more times. You can automate this with the scri
 
 #### Medaka
 
-First, we again need to map the reads to the assembly after the 4 rounds of racon polishing
+First, we again need to map the reads to the assembly after the 4 rounds of racon polishing. Then we polish with medaka. Medaka is a machine-learning model based polisher, so it is super important to correctly specific the flow cell (R9.41) and the basecaller used (guppy 3.2.2 high accuracy which has the same model as guppy 3.03), because that will influence the way that medaka corrects the assembly.
 
-Then we polish with medaka. Medaka is a machine-learning model based polisher, so it is super important to correctly specific the flow cell and the basecaller used, because that will influence the way that medaka corrects the assembly.
+    minimap
+    medaka_consensus -i ./racon/assembly.racon.4.fasta -d knoellia_reads.fastq -m r941_min_high_g303 -t 8 -o medaka
+
 
 ### Long Read Assembly Polishing with Pilon
 After medaka, the assembly should be pretty accurate already. Now polish it until it's done. This could be anything between 1 and 4 rounds of pilon polishing.
