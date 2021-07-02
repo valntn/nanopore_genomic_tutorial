@@ -118,9 +118,21 @@ First, map the short to the medaka output with bowtie2.
     bowtie2 -x knoellia_pilon_1 -1 ../30885_3I2SR_1_trimmed.fastq.gz -2 ../30885_3I2SR_2_trimmed.fastq.gz -S knoellia_pilon_1.sam --local --very-sensitive-local -I 0 -X 1000 --threads 8
 
 
-Then, convert the .sam format file to .bam format file, while only keeping mapped reads (-F 4)
+Then, convert the .sam format file to .bam format file, while only keeping mapped reads (-F 4); then sort & index.
 
-Polish with pilon.
+    samtools view -@ 8 -b -S -F 4 knoellia_pilon_1.sam -o knoellia_pilon_1.bam
+    samtools sort -@ 8 knoellia_pilon_1.bam -o knoellia_pilon_1.sorted.bam
+    samtools index -@ 8 knoellia_pilon_1.sorted.bam
+
+Polish with pilon using the sorted & indexed bam.
+
+    pilon --genome ../medaka/consensus.fasta --frags knoellia_pilon_1.sorted.bam --output knoellia_pilon_1 --outdir . --threads 2 --changes
+    
+If a `java.lang.OutOfMemoryError: Java heap space` comes up, do the following: Type `which pilon`. This will point you to the place of the actual executable, and give you something like `/home/valentin/miniconda3/envs/nanopore_tutorial/bin/pilon`. Edit the file by typing `nano /home/valentin/miniconda3/envs/nanopore_tutorial/bin/pilon (or whatever your path is)`. Then find the line that specifies the memory limits: `default_jvm_mem_opts = ['-Xms512m', '-Xmx1g']` and change the `-Xmx1g` into `-Xmx16g`. This however means that it will use 16Gb of RAM - the small MacBooks don't have that. To reduce RAM usage, the genome can be split into parts and polished separately, but we won't do that here.
+
+Then try running the pilon command again. The output should be a polished genome. Thanks to the --changes flag, pilon also generates a file detailing the changes it made in each round. When this file is empty, it means that pilon has finished and no further rounds are necessary.
+
+There is a script in the files that automates six rounds of mapping & polishing.
 
 ## Compare Assemblies
 We can compare assemblies using different tools. E.g. seqkit:
