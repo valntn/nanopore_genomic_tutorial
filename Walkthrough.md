@@ -4,7 +4,7 @@
 
 ## Preparation
 Make sure you have > 20GB of space available
-General note: I have used all commands with `--threads 8 / -t 8`. This means that the command will use 8 of your CPU threads. If your computer only has 8 threads available (e.g. the 13 inch Macbooks), this might make everything else VERY SLOW. Modify the multithreading by using e.g. 6 or 7 instead of 8 cores.
+General note: I have used all commands with `--threads 8 / -t 8 / -c 8 / -@ 8`. This means that the command will use 8 of your CPU threads. If your computer only has 8 threads available (e.g. the 13 inch Macbooks), this might make everything else VERY SLOW. Modify the multithreading by using e.g. 6 or 7 instead of 8 cores.
 
 If you're unsure about the file formats fasta, fastq, sam & bam, check out: https://bioinformatics.uconn.edu/resources-and-events/tutorials-2/file-formats-tutorial/#
 ### Download Bandage, the assembly graph viewer
@@ -19,13 +19,13 @@ https://rrwick.github.io/Bandage/
     conda config --add channels conda-forge
 
 ### Make conda environment with all needed packages
-READ THROUGH TUTORIAL TO SEE IF YOU NEED ALL THESE PACKAGES! NANOPLOT AND KRAKEN2 MIGHT NOT BE NEEDED
 
-    conda create -n nanopore_tutorial flye unicycler minimap2 samtools pilon racon medaka seqkit bowtie2 nanoplot kraken2 
+    conda create -n nanopore_tutorial flye unicycler minimap2 samtools pilon racon medaka seqkit bowtie2  
 Select yes to install. This will take a while and download about 700MB.
 
 Install busco in same environment (needs different order of package channels for some reason):
 
+    conda activate nanopore_tutorial
     conda install -c conda-forge -c bioconda busco=5.2.1
 
 Since installing busco with all of this would create conflicts (or at least make the environment impossible to solve, as I found by experience), install busco in a separate environment:
@@ -37,8 +37,6 @@ Since installing busco with all of this would create conflicts (or at least make
 
 Follow instructions on https://github.com/fbreitwieser/pavian
 
-### Activate conda environment
-    conda activate nanopore_tutorial
 
 ### Put all files in folder nanopore_tutorial and navigate to folder nanopore_tutorial
 
@@ -66,9 +64,6 @@ Use seqkit stats to check stats on N50, number of reads, max length, quality sco
 
     seqkit stats -a knoellia__reads.fastq
 
-Use nanoplot to plot quality vs length (optional)
-
-    NanoPlot --fastq knoellia_reads.fastq -t 8 --N50 --plots -o knoellia_nanoplot
 
 ## Assemblies
 We're going to do short-read assembly, hybrid assembly and long-read assembly followed by polishing with short reads (so kind of hybrid).
@@ -158,13 +153,15 @@ We can compare assemblies using different tools. E.g. a very obvious one using s
 We can also use Bandage.app to check out the .gfa assembly graphs that spades, unicycler and flye produce.
 
 ### BUSCO  
-Busco uses single copy core genes (SCCG) to assess, completeness and assembly quality. We can use BUSCO to assess the different assemblies, as well as to show the improvement of the polishing steps in the course of the nanopore assembly.
+Busco uses single copy core genes (SCCGs) to assess completeness and assembly quality. We can use BUSCO to assess the different assemblies we created, as well as to show the improvement of the polishing steps in the course of the nanopore assembly.
 
-First, select the appropriate dataset listed by BUSCO that fits with the phylogeny of Knoellia. We should use the most specific dataset we can, so we choose  micrococcales_odb10. Another option is to use the --auto-lineage flag. Alternatives to BUSCO, especially for MAGs, include checkm and GTDB-Tk (more computing power required).
+First, select the appropriate dataset listed by BUSCO that fits with the phylogeny of Knoellia. We should use the most specific dataset we can, so we can list all available datasets and choose the most specific one:
 
     busco --list-datasets
+    
+Another option is to use the --auto-lineage flag. Alternatives to BUSCO, especially for MAGs, include checkm and GTDB-Tk (more computing power required).
 
-The result will show home many SCCGs are present, if they are fragmented, or if they are missing completely. This indicates whether a genome is complete or a part is missing; it also gives a measure of sequence quality, since lots of fragmented SCCGs mean high rate of indels.
+The result will show home many of the expected SCCGs are present, if they are fragmented, or if they are missing completely. This indicates whether a genome is complete or a part is missing; it also gives a measure of sequence quality, since lots of fragmented SCCGs mean high rate of indels.
     
     
     mkdir busco
@@ -194,5 +191,7 @@ Results:
 
 From these results, it is  evident how much short read polishing improves the long-read assembly, even after medaka polishing. If you have read any release notes on these tools, you might think that medaka should produce much better results. This is likely due to the fact that the medaka model provided by nanopore is trained only on E. coli, human genome and yeast. Therefore it will only produce the best results for these organisms.
 
-We can also see that SPAdes produces the most accurate assembly, closely followed by the pilon-polished flye assembly and unicycler. So while it seems that SPAdes wins in terms of accuracy, it is important to keep in mind the contiguity of the assembly - the largest fragment in the SPAdes assembly is 132kb long, while both unicycler and flye assemble the complete chromosome.
+The contamination can also be assessed from these numbers: the % duplicated (D) shows how many of the SCCGs are present twice. in the flye & medaka assembly, we can see that there are a lot of duplicated SCCGs, while that is not the case afterwards. *This is because after the pilon polishing we actively selected to keep only the one circular large circular sequence, and the duplicated genes came from the contaminations*. 
+
+We can also see that SPAdes produces the most accurate assembly (highest completeness), closely followed by the pilon-polished flye assembly and unicycler. So while it seems that SPAdes wins in terms of accuracy, it is important to keep in mind the contiguity of the assembly - the largest fragment in the SPAdes assembly is 132kb long, while both unicycler and flye assemble the complete chromosome. So it seems like a trade-off between a slight decrease in accuracy and a high increase in assembly contiguity.
 
