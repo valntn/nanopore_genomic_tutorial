@@ -1,10 +1,11 @@
 # nanopore_genomic_tutorial
 
-
+This is the DIY tutorial for the workshop. I'll send the links for required short and long read files per email.
+I don't think it will happen, but if any of the steps runs into problems with RAM, I uploaded the result of each assembly step here in the files as well.
 
 ## Preparation
-Make sure you have > 20GB of space available
-General note: I have used all commands with `--threads 8 / -t 8 / -c 8 / -@ 8`. This means that the command will use 8 of your CPU threads. If your computer only has 8 threads available (e.g. the 13 inch Macbooks), this might make everything else VERY SLOW. Modify the multithreading by using e.g. 6 or 7 instead of 8 cores.
+Make sure you have > 10GB of disk space available.
+General note: I have used all commands with `--threads 8 / -t 8 / -c 8 / -@ 8`. This means that the command will use 8 of your CPU threads. If your computer only has 8 threads available (e.g. the 13 inch Macbooks), this might make everything else you're doing on the computer VERY SLOW. Feel free to modify the multithreading by using e.g. 6 or 7 instead of 8 cores.
 
 If you're unsure about the file formats fasta, fastq, sam & bam, check out: https://bioinformatics.uconn.edu/resources-and-events/tutorials-2/file-formats-tutorial/#
 ### Download Bandage, the assembly graph viewer
@@ -28,12 +29,7 @@ Install busco in same environment (needs different order of package channels for
     conda activate nanopore_tutorial
     conda install -c conda-forge -c bioconda busco=5.2.1
 
-Since installing busco with all of this would create conflicts (or at least make the environment impossible to solve, as I found by experience), install busco in a separate environment:
-
-    conda create -n busco -c conda-forge -c bioconda busco=5.2.1
-
-
-### Install pavian in Rstudio
+### Install pavian in Rstudio for kraken2 visualisation
 
 Follow instructions on https://github.com/fbreitwieser/pavian
 
@@ -44,21 +40,22 @@ Follow instructions on https://github.com/fbreitwieser/pavian
 
 
 ## Read QC
-Long reads are already basecalled and adapters trimmed (done with guppy basecaller). To put all reads of one barcode in one file, navigate to the barcode folder and use `cat ./*.fastq > barcode_xy_all_reads.fastq`. For this example, all reads are already in one file.
+Long reads are *already* basecalled and adapters trimmed (done with guppy basecaller). To put all reads of one barcode in one file, navigate to the barcode folder and use `cat ./*.fastq > barcode_xy_all_reads.fastq`. For this example, all reads are already in one file.
 Short reads (forward and reverse) are already trimmed (received from sequencing centre). 
 
 Let's check out the quality of the long reads before assembly.
 
-To check for possible contamination in our sample, you can use kraken2 to classify all the reads, then check report. The databases required are quite big though (30-140GB), which means that they need a lot of RAM, so we won't do it in this tutorial. The small minikraken databases can be used as an alternative, but only cover the species most abundant in databases. Kraken can then be run like this:
+To check for possible contamination in our sample, you can use kraken2 to classify all the reads, then check report. The databases required are quite big though (30-140GB), which means that they need a lot of RAM, so we won't do it in this tutorial. The small minikraken databases can be used as an alternative, but only cover the species most abundant in databases (i.e. not this one). Kraken can then be run like this:
 
     kraken2 --use-names --threads 50 --db ~/valentin/kraken2_gtdb/ --report kraken2_gtdb.report knoellia_reads.fastq 
+    kraken2 --use-names --threads 50 --db ~/valentin/kraken2_gtdb/ --report kraken2_gtdb_SR.report 30885_3I2SR_1_trimmed.fastq.gz
 
-I added the resulting report in the repository. Let's check it in pavian.
+I added the resulting reports in the repository. Let's check them in pavian.
 
 In RStudio type in
 
     pavian::runApp(port=5000) 
-Then load the report file and visualise the plot in "Samples".
+Then load the report file and visualise the plot in "Samples". We can see that there is some contamination in the long reads file.
 
 Use seqkit stats to check stats on N50, number of reads, max length, quality scores, etc
 
@@ -66,10 +63,10 @@ Use seqkit stats to check stats on N50, number of reads, max length, quality sco
 
 
 ## Assemblies
-We're going to do short-read assembly, hybrid assembly and long-read assembly followed by polishing with short reads (so kind of hybrid).
+We're going to do short-read assembly, hybrid assembly and long-read assembly followed by polishing with short reads (i.e. kind of hybrid).
 
 ## Short Read assembly with SPAdes
-SPAdes just uses the short reads to assemble. Very accurate, maybe not so contiguous - let's see for ourselves. Main output if scaffolds.fasta.
+SPAdes just uses the short reads to assemble. Very accurate, maybe not so contiguous - let's see for ourselves. Main output is scaffolds.fasta.
 
     spades.py --isolate -1 ./30885_3I2SR_1_trimmed.fastq.gz -2 ./30885_3I2SR_2_trimmed.fastq.gz -t 8 -o spades_assembly
 
@@ -114,7 +111,7 @@ Medaka is a machine-learning model based polisher, so it is super important to c
 ### Long Read Assembly Polishing with Pilon
 After medaka, the assembly should be pretty accurate already. Now polish with short reads it until it's done. This could be anything between 1 and 4 rounds of pilon polishing.
 
-First, map the short to the medaka output with bowtie2. 
+First, map the short reads to the medaka output with bowtie2. 
 
     mkdir pilon
     cd pilon
@@ -132,19 +129,19 @@ Polish with pilon using the sorted & indexed bam. This might also take a while. 
 
     pilon --genome ../medaka/consensus.fasta --frags knoellia_pilon_1.sorted.bam --output knoellia_pilon_1 --outdir . --threads 8 --changes 
     
-If a `java.lang.OutOfMemoryError: Java heap space` comes up, do the following: Type `which pilon`. This will point you to the place of the actual executable, and give you something like `/home/valentin/miniconda3/envs/nanopore_tutorial/bin/pilon`. Edit the file by typing `nano /home/valentin/miniconda3/envs/nanopore_tutorial/bin/pilon (or whatever your path is)`. Then find the line that specifies the memory limits: `default_jvm_mem_opts = ['-Xms512m', '-Xmx1g']` and change the `-Xmx1g` into `-Xmx16g`. This however means that it will use 16Gb of RAM - the small MacBooks don't have that. To reduce RAM usage, the genome can be split into parts and polished separately, but we won't do that here.
+ONLY IF a `java.lang.OutOfMemoryError: Java heap space` comes up, do the following: Type `which pilon`. This will point you to the place of the actual executable, and give you something like `/home/valentin/miniconda3/envs/nanopore_tutorial/bin/pilon`. Edit the file by typing `nano /home/valentin/miniconda3/envs/nanopore_tutorial/bin/pilon (or whatever your path is)`. Then find the line that specifies the memory limits: `default_jvm_mem_opts = ['-Xms512m', '-Xmx1g']` and change the `-Xmx1g` into `-Xmx8g`. Save by pressing ctrl+X then type 'y'. Then try running the pilon command again. 
 
-Then try running the pilon command again. The output should be a polished genome. Thanks to the `--changes` flag, pilon also generates a file detailing the changes it made in each round. When this file is empty, it means that pilon has finished and no further rounds are necessary.
+The output should be a polished genome. Thanks to the `--changes` flag, pilon also generates a file detailing the changes it made in each round. When this file is empty, it means that pilon has finished and no further rounds are necessary.
 
 There is a script in the files that automates six rounds of mapping & polishing, but check the script for correct flags etc before running. No guarantees it will work.
 
 #### Select the contigs
-Since we saw from the kraken report on the long reads, there was some contamination of the reads. In the assembly_info.txt generated by flye, we could see that there are several short, non-circular fragments with low coverage in addition to the large, circular contig that is the chromosome. The short contigs are likely from the contaminated reads. Therefore, to only carry forward the genome that we want, we can remove the others with seqkit. In this case, since the closed genome is the only large contig, a simple selection by size (ie. select all contigs > 1MB) works. If you want to be sure, you can also copy and blast some of the short sequences to check where they come from.
+Since we saw from the kraken report on the long reads, there was some contamination of the reads. In the assembly_info.txt generated by flye, we could see that there are several short, non-circular fragments with low coverage in addition to the large, circular contig that is the chromosome. The short contigs are likely from the contaminated reads. Therefore, in order to only carry forward the genome that we want, we can remove the others with seqkit. In this case, since the closed genome is the only large contig, a simple selection by size (i.e. select all contigs > 1MB) works. If you want to be sure that it's not an actual real plasmid or something we are removing, you can also copy and blast some of the short sequences to check where they come from.
 
     seqkit seq -m 1000000 consensus_6_pilon.fasta -o knoellia_flye_pilon6_filtered.fasta
 
 ## Compare Assemblies
-We can compare assemblies using different tools. E.g. a very obvious one using seqkit to check sequence lengths
+We can compare assemblies using different tools. E.g. a very obvious one using seqkit to check min & max sequence lengths, N50s, etc.
 
     seqkit stats -a spades_assembly/scaffolds.fasta
     seqkit stats -a unicycler/assembly.fastaknoellia_flye_pilon6_filtered.fasta
@@ -155,13 +152,13 @@ We can also use Bandage.app to check out the .gfa assembly graphs that spades, u
 ### BUSCO  
 Busco uses single copy core genes (SCCGs) to assess completeness and assembly quality. We can use BUSCO to assess the different assemblies we created, as well as to show the improvement of the polishing steps in the course of the nanopore assembly.
 
-First, select the appropriate dataset listed by BUSCO that fits with the phylogeny of Knoellia. We should use the most specific dataset we can, so we can list all available datasets and choose the most specific one:
+First, select the appropriate dataset listed by BUSCO that fits with the phylogeny of our *Knoellia* genome. We should use the most specific dataset we can, so we can list all available datasets and choose the most specific one:
 
     busco --list-datasets
     
-Another option is to use the --auto-lineage flag. Alternatives to BUSCO, especially for MAGs, include checkm and GTDB-Tk (more computing power required).
+Another option is to use the --auto-lineage flag, then BUSCO will try selecting the best lineage itself. Alternatives to BUSCO, especially for MAGs, include checkm (more computing power required).
 
-The result will show home many of the expected SCCGs are present, if they are fragmented, or if they are missing completely. This indicates whether a genome is complete or a part is missing; it also gives a measure of sequence quality, since lots of fragmented SCCGs mean high rate of indels.
+The result will show how many of the expected SCCGs are present, if they are fragmented, or if they are missing completely. This indicates whether a genome is complete or a part is missing; it also gives a measure of sequence quality, since lots of fragmented SCCGs mean high rates of indels.
     
     
     mkdir busco
