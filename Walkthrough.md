@@ -4,7 +4,7 @@
 
 ## Preparation
 Make sure you have > 20GB of space available
-General note: I have used all commands with `--threads 8 / -t 8`. This means that the command will use 8 of your CPU threads. If your computer only has 8 threads available (e.g. Macbooks), this might make everything else VERY SLOW. Modify the multithreading by using e.g. 6 or 7 instead of 8.
+General note: I have used all commands with `--threads 8 / -t 8`. This means that the command will use 8 of your CPU threads. If your computer only has 8 threads available (e.g. the 13 inch Macbooks), this might make everything else VERY SLOW. Modify the multithreading by using e.g. 6 or 7 instead of 8 cores.
 
 If you're unsure about the file formats fasta, fastq, sam & bam, check out: https://bioinformatics.uconn.edu/resources-and-events/tutorials-2/file-formats-tutorial/#
 ### Download Bandage, the assembly graph viewer
@@ -19,9 +19,18 @@ https://rrwick.github.io/Bandage/
     conda config --add channels conda-forge
 
 ### Make conda environment with all needed packages
+READ THROUGH TUTORIAL TO SEE IF YOU NEED ALL THESE PACKAGES! NANOPLOT AND KRAKEN2 MIGHT NOT BE NEEDED
 
-    conda create -n nanopore_tutorial flye unicycler minimap2 samtools pilon racon medaka seqkit kraken2 nanoplot bowtie2 busco
+    conda create -n nanopore_tutorial flye unicycler minimap2 samtools pilon racon medaka seqkit bowtie2 nanoplot kraken2 
 Select yes to install. This will take a while and download about 700MB.
+
+Install busco in same environment (needs different order of package channels for some reason):
+
+    conda install -c conda-forge -c bioconda busco=5.2.1
+
+Since installing busco with all of this would create conflicts (or at least make the environment impossible to solve, as I found by experience), install busco in a separate environment:
+
+    conda create -n busco -c conda-forge -c bioconda busco=5.2.1
 
 
 ### Install pavian in Rstudio
@@ -37,7 +46,7 @@ Follow instructions on https://github.com/fbreitwieser/pavian
 
 
 ## Read QC
-Long reads are already basecalled and adapters trimmed (done with guppy basecaller). To put all reads of one barcode in one file, navigate to the barcode folder and use `cat ./*.fastq > all_reads.fastq`. For this example, all reads are already in one file.
+Long reads are already basecalled and adapters trimmed (done with guppy basecaller). To put all reads of one barcode in one file, navigate to the barcode folder and use `cat ./*.fastq > barcode_xy_all_reads.fastq`. For this example, all reads are already in one file.
 Short reads (forward and reverse) are already trimmed (received from sequencing centre). 
 
 Let's check out the quality of the long reads before assembly.
@@ -149,13 +158,41 @@ We can compare assemblies using different tools. E.g. a very obvious one using s
 We can also use Bandage.app to check out the .gfa assembly graphs that spades, unicycler and flye produce.
 
 ### BUSCO  
-Busco uses single copy core genes (SCCG) to assess genome lineage, completeness, etc. It is a useful tool for assessing genome assembly quality. We can use BUSCO to assess the different assemblies, as well as to show the improvement of the polishing steps in the course of the nanopore assembly.
+Busco uses single copy core genes (SCCG) to assess, completeness and assembly quality. We can use BUSCO to assess the different assemblies, as well as to show the improvement of the polishing steps in the course of the nanopore assembly.
 
-First, select the appropriate dataset listed by BUSCO that fits with the phylogeny of Knoellia. We should use the most narrow range we can, so we choose class actinobacteria. Another option is to use the --auto-lineage flag.
-    
+First, select the appropriate dataset listed by BUSCO that fits with the phylogeny of Knoellia. We should use the most specific dataset we can, so we choose  micrococcales_odb10. Another option is to use the --auto-lineage flag. Alternatives to BUSCO, especially for MAGs, include checkm and GTDB-Tk (more computing power required).
+
     busco --list-datasets
+
+The result will show home many SCCGs are present, if they are fragmented, or if they are missing completely. This indicates whether a genome is complete or a part is missing; it also gives a measure of sequence quality, since lots of fragmented SCCGs mean high rate of indels.
+    
     
     mkdir busco
-    busco -m genome -i flye_assembly/assembly.fasta -o busco/flye_only --auto-lineage-prok -t 8
+    cd busco
+    busco -m genome -i ../flye_assembly/assembly.fasta -o flye_only -l micrococcales_odb10 -c 8
+    busco -m genome -i ../pilon/pilon_polished/knoellia_flye_pilon6_filtered.fasta -o pilon_6 -l micrococcales_odb10 -c 8
+    busco -m genome -i ../unicycler/assembly.fasta -o unicycler -l micrococcales_odb10 -c 8
+    busco -m genome -i ../spades_assembly/scaffolds.fasta -o spades -l micrococcales_odb10 -c 8
+    busco -m genome -i ../medaka/consensus.fasta -o medaka -l micrococcales_odb10 -c 8
+    
+Results:
 
+    Flye only:
+    C:67.1%[S:53.3%,D:13.8%],F:19.2%,M:13.7%,n:537 
+    
+    After medaka:
+    C:76.9%[S:56.8%,D:20.1%],F:12.8%,M:10.3%,n:537 
+    
+    After pilon:
+    C:98.5%[S:98.3%,D:0.2%],F:0.9%,M:0.6%,n:537 
+    
+    Unicycler:
+    C:98.0%[S:97.8%,D:0.2%],F:1.1%,M:0.9%,n:537  
+    
+    SPAdes:
+    C:99.1%[S:98.9%,D:0.2%],F:0.4%,M:0.5%,n:537  
+
+From these results, it is  evident how much short read polishing improves the long-read assembly, even after medaka polishing. If you have read any release notes on these tools, you might think that medaka should produce much better results. This is likely due to the fact that the medaka model provided by nanopore is trained only on E. coli, human genome and yeast. Therefore it will only produce the best results for these organisms.
+
+We can also see that SPAdes produces the most accurate assembly, closely followed by the pilon-polished flye assembly and unicycler. So while it seems that SPAdes wins in terms of accuracy, it is important to keep in mind the contiguity of the assembly - the largest fragment in the SPAdes assembly is 132kb long, while both unicycler and flye assemble the complete chromosome.
 
