@@ -158,7 +158,7 @@ First, select the appropriate dataset listed by BUSCO that fits with the phyloge
     
 Another option is to use the --auto-lineage flag, then BUSCO will try selecting the best lineage itself. Alternatives to BUSCO, especially for MAGs, include checkm (more computing power required).
 
-The result will show how many of the expected SCCGs are present, if they are fragmented, or if they are missing completely. This indicates whether a genome is complete or a part is missing; it also gives a measure of sequence quality, since lots of fragmented SCCGs mean high rates of indels.
+The result will show how many of the expected SCCGs are present & complete (C), if they are fragmented (F), or if they are missing completely (M). This indicates whether a genome is complete or a part is missing; it also gives a measure of sequence quality, since lots of fragmented SCCGs mean high rates of indels.
     
     
     mkdir busco
