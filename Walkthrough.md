@@ -55,7 +55,7 @@ I added the resulting reports in the repository. Let's check them in pavian.
 In RStudio type in
 
     pavian::runApp(port=5000) 
-Then load the report file and visualise the plot in "Samples". We can see that there is some contamination in the long reads file.
+Then load the report file and visualise the plot in "Samples". We can see that there is some contamination with *Streptomyces* in the long reads file, but the short reads seem fine.
 
 Use seqkit stats to check stats on N50, number of reads, max length, quality scores, etc
 
