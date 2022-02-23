@@ -80,7 +80,7 @@ Unicycler uses spades to assemble the short read contigs, but then also uses the
 ## Long Read Assembly with Flye
 Assemble long reads with flye. This usually produces the most contiguous assembly, but it still needs polishing both with long-read specific tools and with the short reads of the same sample. This should take 20 minutes or so.
 
-    flye --threads 8 --genome-size 4g --nano-raw knoellia_reads.fastq --out-dir flye_assembly
+    flye --threads 8 --genome-size 4m --nano-raw knoellia_reads.fastq --out-dir flye_assembly
 
 You can inspect the assembly outcome by checking assembly_info.txt. 
 
