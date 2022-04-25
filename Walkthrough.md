@@ -88,19 +88,22 @@ You can inspect the assembly outcome by checking assembly_info.txt.
 The slightly contaminated long reads combined with flye's ability to assemble contigs at low coverage have lead to the presence several other fragments apart from the circular contig.
 
 ### Long Read Assembly Polishing with Racon (4x) and Medaka (1x)
-The common workflow is to use racon in 4 iterations before feeding the resulting file into medaka. Racon uses the basecalled reads to find a "most likely" correct base. Medaka uses a machine learning model trained on genomic data to correct assemblies.
 
-#### Racon
+~~The common workflow is to use racon in 4 iterations before feeding the resulting file into medaka. Racon uses the basecalled reads to find a "most likely" correct base. Medaka uses a machine learning model trained on genomic data to correct assemblies.~~
+
+This has been superseded - _new versions of medaka now work with the output of flye directly._
+
+~~#### Racon
 First, we need to map the reads to the assembly, creating a .paf (similar to sam and bam) file. Then we polish with racon. This takes minutes.
 
     mkdir racon
     minimap2 -x map-ont -t 8 ./flye_assembly/assembly.fasta knoellia_reads.fastq > ./racon/knoellia.racon.1.paf
     
-Then we polish with racon.
+~~Then we polish with racon.~~
 
     racon -u -t 8 -m 8 -x -6 -g -8 -w 500 knoellia_reads.fastq ./racon/knoellia.racon.1.paf ./flye_assembly/assembly.fasta > knoellia.racon.1.fasta
 
-Then we repeat the process three more times. You can automate this with the script provided in the files.
+~~Then we repeat the process three more times. You can automate this with the script provided in the files.~~
 
 #### Medaka
 Medaka is a machine-learning model based polisher, so it is super important to correctly specific the flow cell (R9.41) and the basecaller used (guppy 3.2.2 high accuracy which has the same model as guppy 3.03), because that will influence the way that medaka corrects the assembly. Main output is consensus.fasta in the medaka folder.
