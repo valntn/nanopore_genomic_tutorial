@@ -13,17 +13,17 @@ The nanopore outputs are in ~/nanopore_data. fastq_pass is the directory contain
 
 If you're unsure about the file formats fasta, fastq, sam & bam, check out: https://bioinformatics.uconn.edu/resources-and-events/tutorials-2/file-formats-tutorial/#
 
-Everything here is run with conda. Conda makes it very easy to install and run programs. For running a program, its environment has to be activated, like so:
+Everything needed for the workshop is installed using conda. Conda makes it very easy to install and run programs. For running a program, its environment has to be activated, like so:
 
     conda activate flye
 
 And you'll see the (flye) environment being active in the line where you type.
 
-WHen you're done with the program, deactivate with
+When you're done with the program, deactivate with
 
     conda deactivate
 
-To see a list of all available environments, type
+To see a list of all environments on the server, type
 
     conda env list
 
