@@ -1,6 +1,13 @@
 # nanopore_genomic_tutorial 
 
-This tutorial is *not* 100% step-by-step, since you will have to navigate to the right folders, make directories, maybe rename a file or two, etc. When trying to run a tool, first check the link given for usage instructions or use the --help flag (e.g. `flye --help`) to get instructions.
+This tutorial is *not* 100% step-by-step, since you will have to navigate to the right folders, make directories, maybe rename a file or two, etc. When trying to run a tool, first check the link given for usage instructions or use the --help flag (e.g. `flye --help`) to get instructions. I have hidden some commands - the idea is that you can try and figure out the settings yourself by checking the documentation. The solutions can be seen by clicking on the arrow
+
+<details>
+<summary>Like here</summary>
+       
+    scp --help
+    
+</details>
 
 The nanopore outputs are in ~/nanopore_data. fastq_pass is the directory containing the basecalled reads meeting the selection criteria. The report file contains some good info on the sequencing run.
 
@@ -20,25 +27,24 @@ To see a list of all available environments, type
 
     conda env list
 
+For this workshop, run all commands with a maximum of 6 threads.
+
 ## Read QC
 Long reads are *already* basecalled and adapters trimmed (done with guppy basecaller). The raw basecalled reads are located in `~/nanopore_data/fastq_pass/barcode[18/19/20/21/22]/`. The read files were put into one file (e.g `barcode18.fastq`) using the cat command (`cat ./*.fastq > barcode_xy_all_reads.fastq`). For this example, all reads _are already in one file_
 
 Let's check out the quality of the long reads before assembly.
 
-To check for possible contamination in our sample, you can use kraken2 to classify all the reads, then check report - how many % are E. coli? Any unexpected things? https://ccb.jhu.edu/software/kraken2/
-
-    kraken2 --db ~/software/kraken_db/ --threads 6 --output barcode_18.output --report barcode_18.report --use-names ~/nanopore_data/fastq_pass/barcode18.fastq
-
-You can also visualise the reports using pavian in Rstudio on your laptop (if you have it - not necessary here).
+To check for possible contamination in our sample, you can use kraken2 to classify all the reads & provide a report, then check report - how many % are E. coli? Any unexpected things? https://ccb.jhu.edu/software/kraken2/
 
 <details>
-<summary>Pavian details</summary>
+<summary>Kraken command</summary>
+    
+    kraken2 --db ~/software/kraken_db/ --threads 6 --output barcode_18.output --report barcode_18.report --use-names ~/nanopore_data/fastq_pass/barcode18.fastq
 
-Download report file. In RStudio type in
-
-    pavian::runApp(port=5000) 
-Then load the report file and visualise the plot in "Samples". We can see that there is some contamination with *Streptomyces* in the long reads file, but the short reads seem fine.
 </details>
+
+    
+You can also visualise the reports using pavian in Rstudio on your laptopn if you have it. Not super necessary for this workshop.
 
 ### Seqkit
 
@@ -50,13 +56,23 @@ Use seqkit stats to check stats on N50, number of reads, max length, quality sco
 Use NanoPlot to make nice graphs with read length and quality, see usage here: https://github.com/wdecoster/NanoPlot
 You need to download the graphs using scp to look at them. Do the graphs agree with the info you got from seqkit?
 
-    NanoPlot --fastq ~/nanopore_data/fastq_pass/barcode19.fastq --loglength -o barcode19 --threads 6
+<details>
+<summary>NanoPlot command</summary>
     
+    NanoPlot --fastq ~/nanopore_data/fastq_pass/barcode19.fastq --loglength -o barcode19 --threads 6
+
+</details>
+
 ### Filtlong
 Some barcodes have extremely high coverage! Assembling a 200x coverage genome takes about 45 minutes. Reducing it to 100 makes it much quicker, ca. 20 minutes. You can use filtlong to remove the short and low-quality reads, thereby reducing assembly time. Check the documentation: https://github.com/rrwick/Filtlong
 How many bases should we keep to have 100x coverage?
 
+<details>
+<summary>FiltLong command</summary>
+    
     filtlong --min_length 1000 --keep_percent 90 --target_bases 500000000 barcode22.fastq | gzip > barcode22_filtered.fastq.gz
+
+</details>
 
 
 ## Assemblies
