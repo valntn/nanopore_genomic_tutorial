@@ -137,6 +137,7 @@ Ideel is a way of assessing the prevalence of frameshift mutations resulting fro
 
 To run it:
 Put your genomes in a directory with the name "genomes" in the ~/programs/ideel directory, makes sure they have ".fa" file extension. Then navigate to the ideel directory, activate conda environment and execute
+
     snakemake
 
 
