@@ -99,7 +99,7 @@ Do not polish with racon - _new versions of medaka now work with the output of f
 
 
 ### Medaka
-Medaka is a machine-learning model based polisher, so it is _super important_ to correctly specific the flow cell and the basecaller used, because that will influence the way that medaka corrects the assembly. You can find the flow cell, the guppy basecaller version and the basecalling model used in the sequencing report file in the nanopore data folder. The available models can be found by typing medaka_basecaller -h
+Medaka is a machine-learning model based polisher, so it is _super important_ to correctly specific the flow cell and the basecaller used, because that will influence the way that medaka corrects the assembly. You can find the flow cell, the guppy basecaller version and the basecalling model used in the sequencing report file in the nanopore data folder. The available models can be found by typing medaka_consensus -h
 The main output of medaka consensus.fasta in the medaka folder.
 https://github.com/nanoporetech/medaka#Usage
 
@@ -111,6 +111,15 @@ https://github.com/nanoporetech/medaka#Usage
 </details>
 
 ## Assessing the assembly
+When we have an assembly, we should check how complete it is. That can be done in different ways.
+
+### Bandage
+Bandage visualises the assembly graph. It it similar info as you will get from assembly_info.txt, but including nice visualisations. Download the assembly_graph.gfa file from the flye output onto your computer and then load into Bandage: https://github.com/rrwick/Bandage/
+
+### Seqkit
+Seqkit can also give you some statistics on your assembly:
+
+       seqkit stats -a consensus.fasta
 
 ### BUSCO  
 Busco uses single copy core genes (SCCGs) to assess completeness and assembly quality. We can use BUSCO to assess the different assemblies we created, as well as to show the improvement of the polishing steps in the course of the nanopore assembly. https://busco.ezlab.org/
