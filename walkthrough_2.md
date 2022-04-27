@@ -9,7 +9,7 @@ This tutorial is *not* 100% step-by-step, since you will have to navigate to the
     
 </details>
 
-The nanopore outputs are in ~/nanopore_data. fastq_pass is the directory containing the basecalled reads meeting the selection criteria. The report file contains some good info on the sequencing run.
+The nanopore outputs are in ~/nanopore_data. fastq_pass is the directory containing the basecalled reads meeting the selection criteria. The report file contains some good info on the sequencing run. In ~/outputs you will find outputs from all tools. All samples have been processed with filtlong, assembled with flye and polished with medaka, but all other tools have only been applied to one or two samples.
 
 If you're unsure about the file formats fasta, fastq, sam & bam, check out: https://bioinformatics.uconn.edu/resources-and-events/tutorials-2/file-formats-tutorial/#
 
@@ -52,7 +52,7 @@ Use seqkit stats to check stats on N50, number of reads, max length, quality sco
 
     seqkit stats -a barcode18.fastq
 
-### NanoPlot
+### NanoPlot (optional)
 Use NanoPlot to make nice graphs with read length and quality, see usage here: https://github.com/wdecoster/NanoPlot
 You need to download the graphs using scp to look at them. Do the graphs agree with the info you got from seqkit?
 
@@ -64,8 +64,8 @@ You need to download the graphs using scp to look at them. Do the graphs agree w
 </details>
 
 ### Filtlong
-Some barcodes have extremely high coverage! Assembling a 200x coverage genome takes about 45 minutes. Reducing it to 100 makes it much quicker, ca. 20 minutes. You can use filtlong to remove the short and low-quality reads, thereby reducing assembly time. Check the documentation: https://github.com/rrwick/Filtlong
-How many bases should we keep to have 100x coverage?
+Some of the barcodes have extremely high coverage! Assembling a >200x coverage genome takes about 45 minutes. Reducing it to 100 makes it much quicker, only ca. 20 minutes. You can use filtlong to remove the short and low-quality reads, thereby reducing assembly time. Check the documentation: https://github.com/rrwick/Filtlong
+One ting to take into account - how many bases should we keep to have 100x coverage?
 
 <details>
 <summary>FiltLong command</summary>
