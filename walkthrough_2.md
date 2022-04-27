@@ -40,18 +40,19 @@ Download report file. In RStudio type in
 Then load the report file and visualise the plot in "Samples". We can see that there is some contamination with *Streptomyces* in the long reads file, but the short reads seem fine.
 </details>
 
-###Seqkit 
+### Seqkit
+
 Use seqkit stats to check stats on N50, number of reads, max length, quality scores, etc. Compare the different fastq files - notice any differences? Which barcode has longer reads, which one has the most sequences? What is the estimated depth of coverage for each sample when taking into account E. coli genome size? https://bioinf.shenwei.me/seqkit/usage/#stats
 
     seqkit stats -a barcode18.fastq
 
-###NanoPlot
+### NanoPlot
 Use NanoPlot to make nice graphs with read length and quality, see usage here: https://github.com/wdecoster/NanoPlot
 You need to download the graphs using scp to look at them. Do the graphs agree with the info you got from seqkit?
 
     NanoPlot --fastq ~/nanopore_data/fastq_pass/barcode19.fastq --loglength -o barcode19 --threads 6
     
-###Filtlong
+### Filtlong
 Some barcodes have extremely high coverage! Assembling a 200x coverage genome takes about 45 minutes. Reducing it to 100 makes it much quicker, ca. 20 minutes. You can use filtlong to remove the short and low-quality reads, thereby reducing assembly time. Check the documentation: https://github.com/rrwick/Filtlong
 How many bases should we keep to have 100x coverage?
 
@@ -66,7 +67,9 @@ Assemble long reads with flye. This usually produces the most contiguous assembl
 
 <details>
 <summary>Flye command</summary>
+       
     flye --threads 6 --genome-size 4m --nano-raw barcode18.fastq --out-dir barcode18
+    
 </details>
 
 You can inspect the assembly outcome by checking assembly_info.txt. Is there a circular chromosome? Any plasmids? Any assembly artifacts?
@@ -74,22 +77,24 @@ You can inspect the assembly outcome by checking assembly_info.txt. Is there a c
     less flye_assembly/assembly_info.txt
 
 
-### Long Read Assembly Polishing with Medaka (1x)
+## Long Read Assembly Polishing with Medaka
 
 Do not polish with racon - _new versions of medaka now work with the output of flye directly._
 
 
-#### Medaka
+### Medaka
 Medaka is a machine-learning model based polisher, so it is _super important_ to correctly specific the flow cell and the basecaller used, because that will influence the way that medaka corrects the assembly. You can find the flow cell, the guppy basecaller version and the basecalling model used in the sequencing report file in the nanopore data folder. The available models can be found by typing medaka_basecaller -h
 The main output of medaka consensus.fasta in the medaka folder.
 https://github.com/nanoporetech/medaka#Usage
 
 <details>
 <summary>Medaka command</summary>
+    
     medaka_consensus -m r941_min_hac_g507 -t 12 -i ~/outputs/filtlong/barcode18.fastq_filtered.fastq.gz -d ~/outputs/flye/barcode18/assembly.fasta -o barcode18_medaka
+    
 </details>
 
-##Assessing the assembly
+## Assessing the assembly
 
 ### BUSCO  
 Busco uses single copy core genes (SCCGs) to assess completeness and assembly quality. We can use BUSCO to assess the different assemblies we created, as well as to show the improvement of the polishing steps in the course of the nanopore assembly. https://busco.ezlab.org/
